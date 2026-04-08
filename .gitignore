@@ -205,3 +205,21 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project outputs
+## Snakemake
+.snakemake/
+*.snakemake.log
+## Log files
+logs/
+## Results / large outputs
+results/
+plots/
+*.zip
+*.png
+*.svg
+## Input data
+data/
+cxs/
+## Conda environments created by snakemake
+.snakemake/conda/

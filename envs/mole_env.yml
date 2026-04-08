@@ -1,0 +1,54 @@
+name: mole_env
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - requests
+  - tenacity
+  - pandas
+  - numpy
+  - pyyaml
+  - openpyxl
+  - xlsxwriter
+  - matplotlib
+  - seaborn
+  - gemmi
+  - biopython
+  - hydride
+
+  # R libraries (Conda)
+  - r-essentials
+  - r-biocmanager
+  - r-devtools
+  - r-nloptr
+  - r-lme4
+  - r-pbkrtest
+  - r-car
+
+  # Avoid CRAN compilation failures (provide these via conda)
+  - r-units
+  - r-s2
+  - r-sf
+  - r-classint
+  - r-png
+  - r-gdtools
+  - r-ggiraph
+  - r-ggstar
+  - r-ggpattern
+  - r-gridpattern
+  - r-showtext
+  - r-ggbeeswarm
+  - r-ggdist
+  - r-gtools
+  - r-multcompview
+  - r-openxlsx
+  - r-patchwork
+  - r-pheatmap
+  - r-psych
+  - r-svglite
+  - r-writexl
+
+  # System libraries
+  - zlib
+  - pkg-config
