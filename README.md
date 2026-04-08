@@ -163,7 +163,7 @@ chmod -R u+rwX ./data
 ## 2. Ensure that PDB filenames follow the required naming scheme
 Each `.pdb` file must use a prefix that can be parsed by the pipeline. This naming convention is historically based on the [af3-server-workflow](https://github.com/JanHuebbers/af3-server-workflow) and is built from the AF3 RunID, JobID, Seed, and ModelID:
 `<AAAA(RunID)>_<BB(JobID)>_<CCCC(Seed)>_<DD(ModelID)>`
-This prefix is used for filtering and plotting pore profiles.
+This prefix identifies a single structure and is used for filtering and plotting pore profiles. In the current version, gradient colors and point shapes are mapped according to seed values.
 Alternatively, copy `.pdb` files with the desired prefix into `./data`.
 ## 3. Run the full pipeline
 Adjust the desired MOLE parameters, such as `poremode` and `probe radius`, in `config.yaml`.
