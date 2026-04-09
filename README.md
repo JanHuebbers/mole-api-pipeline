@@ -1,26 +1,30 @@
 # mole-api-pipeline
 A Snakemake-based workflow for preparing .pdb input structures, submitting remote MOLE API jobs, collecting pore/channel analysis results, and generating downstream plots from MD-derived protein structures.
-# Table of contents
-- Overview
-- Features
-- Notes
-- Repository layout
-- Requirements
-- Installation
-- Quick start
-- Workflow
-  1. Create input
-  2. Ensure that PDB filenames follow the required naming scheme
-  3. Run the full pipeline
-  4. Re-run only a specific part by targeting an output
-  5. Limit concurrent MOLE API usage
-  6. Result collection and aggregation
-  7. Plotting and merged plots
-- Typical workflow
-- Status
-# Overview
+## Table of contents
+- [Overview](#overview)
+- [Features](#features)
+- [Notes](#notes)
+- [Repository layout](#repository-layout)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Workflow](#workflow)
+  - [1. Create input](#1-create-input)
+  - [2. Ensure that PDB filenames follow the required naming scheme](#2-ensure-that-pdb-filenames-follow-the-required-naming-scheme)
+  - [3. Run the full pipeline](#3-run-the-full-pipeline)
+  - [4. Re-run only a specific part by targeting an output](#4-re-run-only-a-specific-part-by-targeting-an-output)
+  - [5. Limit concurrent MOLE API usage](#5-limit-concurrent-mole-api-usage)
+  - [6. Result collection and aggregation](#6-result-collection-and-aggregation)
+  - [7. Plotting and merged plots](#7-plotting-and-merged-plots)
+- [Troubleshooting](#troubleshooting)
+  - [The run looks “stuck” after activation](#the-run-looks-stuck-after-activation)
+  - [Inspect a running computation manually](#inspect-a-running-computation-manually)
+  - [JSON decode errors for parameters](#json-decode-errors-for-parameters)
+- [Typical workflow](#typical-workflow)
+- [Status](#status)
+## Overview
 `mole-api-pipeline` is a modular Snakemake workflow for preparing .pdb protein structure inputs from .cxs files, renaming MD-derived PDB files into MOLE-compatible identifiers, submitting remote MOLE API jobs, polling and collecting finished runs, and generating pore-analysis plots. It is designed for Ubuntu _via_ WSL on Windows, but can also be adapted to other Linux environments.
-# Features
+## Features
 - Remote execution of MOLE API jobs from local structure files
 - Snakemake-based orchestration of submission, polling, collection, and plotting
 - ChimeraX `.cxs` to `.pdb` export helper script
@@ -30,14 +34,14 @@ A Snakemake-based workflow for preparing .pdb input structures, submitting remot
 - Merged pore plots across selected result sets
 - Recovery-friendly reruns by targeting downstream outputs
 - Designed for Linux and WSL-based workflows
-# Notes
+## Notes
 - This workflow currently assumes a Linux-style environment.
 - The pipeline was written for Ubuntu on WSL.
 - ChimeraX paths may need manual adjustment in `./cxs/chimeraX_path.yml`.
 - MOLE API jobs are remote and may queue depending on server load.
 - If you manually copy files from Windows into WSL, you may need ownership and permission fixes.
 - This workflow integrates well with structures derived from AlphaFold 3 predictions _via_ [af3-server-workflow](https://github.com/JanHuebbers/af3-server-workflow).
-# Repository layout
+## Repository layout
 ```text
 mole-api-pipeline/
 ├── README.md
@@ -51,8 +55,8 @@ mole-api-pipeline/
 ├── rules
 └── src
 ```
-# Requirements
-## System
+## Requirements
+### System
 - Linux environment
 - Conda, Miniconda, or Mamba
 - Python
@@ -61,15 +65,15 @@ mole-api-pipeline/
 - Internet access for remote MOLE API submission
 
 **Recommended environment: Ubuntu or Ubuntu via WSL on Windows.**
-# Installation
-## 1. Install Snakemake
+## Installation
+### 1. Install Snakemake
 Follow the official [Snakemake documentation](https://snakemake.readthedocs.io/en/stable/index.html) to install Snakemake. The setup described in this repository uses [Miniforge](https://github.com/conda-forge/miniforge).
-## 2. Clone the repository
+### 2. Clone the repository
 ```bash
 git clone <your-repository-url>
 cd mole-api-pipeline
 ```
-## 3. Configure Conda channels and environments
+### 3. Configure Conda channels and environments
 **Load Miniforge:**
 ```bash
 source ~/miniforge3/etc/profile.d/conda.sh
@@ -92,7 +96,7 @@ conda env create -f envs/mole_env.yml
 conda env update -f envs/snakemake_env.yml --prune
 conda env update -f envs/mole_env.yml --prune
 ```
-## 4. Configure ChimeraX path  
+### 4. Configure ChimeraX path  
 Edit `./cxs/chimeraX_path.yml` to point to your ChimeraX executable. **For WSL, the path may look like this:**
 ```yaml
 chimerax_path: "/mnt/c/Program Files/ChimeraX 1.10.1/bin/ChimeraX-console.exe"
@@ -102,7 +106,7 @@ chimerax_path: "/mnt/c/Program Files/ChimeraX 1.10.1/bin/ChimeraX-console.exe"
 "/mnt/c/Program Files/ChimeraX 1.10.1/bin/ChimeraX-console.exe" --version
 ```
 
-## 5. Prepare input folders  
+### 5. Prepare input folders  
 **Create or populate the folders used by the workflow, especially:**
 - `cxs/` for ChimeraX session files
 - `data/` for exported or renamed PDBs
@@ -111,18 +115,18 @@ chimerax_path: "/mnt/c/Program Files/ChimeraX 1.10.1/bin/ChimeraX-console.exe"
 ```bash
 mkdir -p cxs data logs results
 ```
-# Quick start
-## 1. Activate the Conda environment
+## Quick start
+### 1. Activate the Conda environment
 ```bash
 source ~/miniforge3/etc/profile.d/conda.sh
 conda activate snakemake_env
 ```
-## 2. (Optional) Export `.pdb` files from ChimeraX `.cxs` files
+### 2. (Optional) Export `.pdb` files from ChimeraX `.cxs` files
 Use this step for `.cxs` files that contain multiple structures retrieved from AF3 predictions with [af3-server-workflow](https://github.com/JanHuebbers/af3-server-workflow):
 ```bash
 python src/run_cxs_to_pdb.py ./cxs/0001_01_1710.cxs data
 ```
-## 4. Run the full Snakemake pipeline
+### 4. Run the full Snakemake pipeline
 ```bash
 snakemake -j 1 --use-conda
 ```
@@ -130,7 +134,7 @@ To test the pipeline without executing any rules, run a **dry run**:
 ```bash
 snakemake -n -p
 ```
-# Workflow
+## Workflow
 The Snakemake workflow handles the main remote MOLE execution sequence:
 - initialize a computation
 - submit a MOLE or Pores run
@@ -145,7 +149,7 @@ The Snakemake workflow handles the main remote MOLE execution sequence:
 source ~/miniforge3/etc/profile.d/conda.sh
 conda activate snakemake_env
 ```
-## 1. Create input
+### 1. Create input
 Create `.pdb` files from ChimeraX `.cxs` files.
 **Default:**
 ```bash
@@ -161,20 +165,20 @@ If you manually copy and rename `.cxs` or `.pdb` files from Windows to WSL, upda
 sudo chown -R "$USER":"$USER" ./data
 chmod -R u+rwX ./data
 ```
-## 2. Ensure that PDB filenames follow the required naming scheme
+### 2. Ensure that PDB filenames follow the required naming scheme
 Each `.pdb` file must use a prefix that can be parsed by the pipeline. This naming convention is historically based on the [af3-server-workflow](https://github.com/JanHuebbers/af3-server-workflow) and is built from the AF3 RunID, JobID, Seed, and ModelID:
 `<AAAA(RunID)>_<BB(JobID)>_<CCCC(Seed)>_<DD(ModelID)>`
 **Alternatively, copy `.pdb` files with the desired prefix into `./data`.**
 This prefix identifies a single structure and is used for filtering and plotting pore profiles. In the current version, gradient colors and point shapes are mapped according to seed values.
 
-### Color definitions in `P1_poreprofile_perPDB.R` and `P2_poreprofile_merged.R`
+#### Color definitions in `P1_poreprofile_perPDB.R` and `P2_poreprofile_merged.R`
 The plotting scripts in `./src/R/` use fixed seed-level color definitions to ensure reproducible and comparable plot aesthetics across all outputs.
 
 A selected group of AF3 seeds is assigned colors from a predefined gradient, while other seeds are mapped to manually specified fixed colors. Both mappings are merged into a single color table and applied consistently during plotting.
 
 This approach ensures that the same seed is always represented by the same color across sample-level and merged pore profile plots. In the current version, color is mapped to seed values extracted from the filename prefix.
 
-## 3. Run the full pipeline
+### 3. Run the full pipeline
 Adjust the desired MOLE parameters, such as `poremode` and `probe radius`, in `config.yaml`.
 **Default:**
 ```bash
@@ -188,7 +192,7 @@ snakemake -j 1 --use-conda -p
 ```bash
 snakemake -npr --use-conda
 ```
-## 4. Re-run only a specific part by targeting an output
+### 4. Re-run only a specific part by targeting an output
 **Retry collection without resubmitting:**
 ```bash
 snakemake -j 1 --use-conda results/0001_01_1710_00/results.json
@@ -197,7 +201,7 @@ snakemake -j 1 --use-conda results/0001_01_1710_00/results.json
 ```bash
 snakemake -j 1 --use-conda results/pore_data_long.csv results/physchem_long.csv
 ```
-## 5. Limit concurrent MOLE API usage
+### 5. Limit concurrent MOLE API usage
 You can allow high overall pipeline parallelism while restricting how many remote MOLE jobs run simultaneously.
 **One MOLE job at a time:**
 ```bash
@@ -211,7 +215,7 @@ This is useful because:
 - `-j` controls total pipeline parallelism
 - `--resources mole_api=N` limits rules that consume `mole_api=1`
 - this is ideal for remote APIs with queue or rate limitations
-## 6. Result collection and aggregation
+### 6. Result collection and aggregation
 Typical collected outputs include:
 - `results.json`
 - pore-related `.csv` tables
@@ -219,8 +223,8 @@ Typical collected outputs include:
   - `results/pore_data_long.csv`
   - `results/physchem_long.csv`
 Because collection is separated from submission in the dependency graph, it is often possible to rerun downstream collection or aggregation without resubmitting finished jobs.
-## 7. Plotting and merged plots
-### Plot one sample
+### 7. Plotting and merged plots
+#### Plot one sample
 Force regeneration of one pore outline plot:
 ```bash
 snakemake --use-conda -j 1 \
@@ -228,7 +232,7 @@ snakemake --use-conda -j 1 \
   --forcerun plot_sample_pore -- \
   results/0001_01_1710_00/pore_outline_rel.svg
 ```
-### Plot all existing sample pore outlines
+#### Plot all existing sample pore outlines
 This finds all `results/*/pore_data.csv` files and maps them to their corresponding SVG targets:
 ```bash
 snakemake --use-conda -j 1 \
@@ -237,7 +241,7 @@ snakemake --use-conda -j 1 \
   $(find results -maxdepth 2 -name pore_data.csv -print \
     | sed 's#/pore_data\.csv$#/pore_outline_rel.svg#')
 ```
-### Merged plots
+#### Merged plots
 The merged output folder is computed from the active config:
 ```bash
 python src/make_merged_dir.py config.yaml
@@ -254,15 +258,15 @@ snakemake --use-conda -j 1 \
   --forcerun plot_merged_pores -- \
   "$MERGED_DIR/pore_outlines_merged_D.svg"
 ```
-# Troubleshooting
-## The run looks “stuck” after activation
+## Troubleshooting
+### The run looks “stuck” after activation
 MOLE API execution is remote and may queue. With progress prints enabled, you should typically see:
 - `status=Initializing`
 - `status=Initialized`
 - `status=Running`
 - `status=Finished`
 If a run remains in `Initialized` for a long time, this is usually due to remote server load or queueing.
-## Inspect a running computation manually
+### Inspect a running computation manually
 **Example IDs:**
 ```bash
 COMP=ZuNpSdHKgkqnGx29W8GQ
@@ -280,7 +284,7 @@ curl "https://api.mole.upol.cz/CompInfo/$COMP"
 ```bash
 curl "https://api.mole.upol.cz/Version"
 ```
-## JSON decode errors for parameters
+### JSON decode errors for parameters
 Ensure parameters are passed as valid JSON:
 - use double quotes
 - use `true` and `false`
@@ -288,7 +292,7 @@ Ensure parameters are passed as valid JSON:
 
 The Snakemake workflow should typically generate parameter JSON through `json.dumps()` to avoid malformed requests.
 
-# Typical workflow
+## Typical workflow
 - set up the environment
 - configure ChimeraX access
 - export `.pdb` files from `.cxs` sessions if needed, or submit `.pdb` files directly to `data/` following the naming convention
@@ -299,7 +303,7 @@ The Snakemake workflow should typically generate parameter JSON through `json.du
 - collect result files under `results/`
 - generate sample-level pore plots
 - generate merged plots for selected configurations
-# Status
+## Status
 - PDB export: active
 - name translation workflow: active
 - remote MOLE API execution: active
